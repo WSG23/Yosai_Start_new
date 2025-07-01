@@ -32,7 +32,8 @@ yosai_intel_dashboard/
 │   ├── navbar.py             # Navigation component
 │   └── map_panel.py          # Map visualization
 ├── pages/                    # Multi-page application pages
-│   └── deep_analytics.py     # Analytics page
+│   ├── deep_analytics/       # Analytics package
+│   └── file_upload/          # Upload package
 ├── utils/                    # Utility functions
 └── assets/                   # Static assets and CSS
     └── css/                  # Modular CSS architecture
