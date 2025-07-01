@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Iterable, List, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Tuple, cast
 import threading
 import logging
 
@@ -53,20 +53,20 @@ class UnifiedCallbackCoordinator:
             inputs_tuple: Tuple[Input, ...] = tuple()
             inputs_arg = None
         elif isinstance(inputs, (list, tuple)):
-            inputs_tuple = tuple(inputs)
+            inputs_tuple = tuple(cast(Iterable[Input], inputs))
             inputs_arg = inputs
         else:
-            inputs_tuple = (inputs,)
+            inputs_tuple = (cast(Input, inputs),)
             inputs_arg = inputs
 
         if states is None:
             states_tuple: Tuple[State, ...] = tuple()
             states_arg = None
         elif isinstance(states, (list, tuple)):
-            states_tuple = tuple(states)
+            states_tuple = tuple(cast(Iterable[State], states))
             states_arg = states
         else:
-            states_tuple = (states,)
+            states_tuple = (cast(State, states),)
             states_arg = states
 
         outputs_tuple = outputs if isinstance(outputs, (list, tuple)) else (outputs,)

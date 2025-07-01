@@ -850,7 +850,9 @@ def populate_modal_content(is_open, file_info):
         },
     ]
 
-    csv_column_options = [{"label": f'"{col}"', "value": col} for col in columns]
+    csv_column_options: List[dict[str, str]] = [
+        {"label": f'"{col}"', "value": col} for col in columns
+    ]
     csv_column_options.append({"label": "Skip this field", "value": "skip"})
 
     table_rows = []
