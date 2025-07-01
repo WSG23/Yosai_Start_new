@@ -390,12 +390,19 @@ def handle_analysis_buttons(
     suggests_n,
     quality_n,
     unique_n,
+    pathname,
     data_source,
 ):
     """Handle analysis button clicks and auto-run Unique Patterns on load."""
 
-    # Auto-run on page load
-    if not callback_context.triggered:
+    # Auto-run on page load or when navigating directly to the analytics page
+    if (
+        not callback_context.triggered
+        or (
+            callback_context.triggered[0]["prop_id"] == "url.pathname"
+            and pathname == "/analytics"
+        )
+    ):
         try:
             return run_unique_patterns_analysis()
         except Exception as e:
@@ -480,6 +487,7 @@ def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
             Input("suggests-btn", "n_clicks"),
             Input("quality-btn", "n_clicks"),
             Input("unique-patterns-btn", "n_clicks"),
+            Input("url", "pathname"),
         ],
         [State("analytics-data-source", "value")],
         prevent_initial_call=False,

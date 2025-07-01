@@ -95,3 +95,35 @@ def test_run_unique_patterns_analysis_no_data(monkeypatch):
     monkeypatch.setattr(cb, "AnalyticsService", lambda: FakeService())
     result = cb.run_unique_patterns_analysis()
     assert isinstance(result, dbc.Alert)
+
+
+def test_handle_analysis_buttons_autorun_on_url(monkeypatch):
+    """Ensure unique patterns analysis runs when URL triggers the callback."""
+
+    calls = {"ran": False}
+
+    def fake_run():
+        calls["ran"] = True
+        return "ok"
+
+    monkeypatch.setattr(cb, "run_unique_patterns_analysis", fake_run)
+    monkeypatch.setattr(
+        cb,
+        "callback_context",
+        types.SimpleNamespace(triggered=[{"prop_id": "url.pathname"}]),
+    )
+
+    result = cb.handle_analysis_buttons(
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        "/analytics",
+        None,
+    )
+
+    assert calls["ran"]
+    assert result == "ok"
