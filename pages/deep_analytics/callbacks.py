@@ -394,12 +394,12 @@ def handle_analysis_buttons(
 ):
     """Handle analysis button clicks and auto-run Unique Patterns on load."""
 
-    # Auto-run on page load
+    # Auto-run Unique Patterns when data source is available and no button clicked yet
+    if not callback_context.triggered and data_source and data_source != "none":
+        return run_unique_patterns_analysis()
+
     if not callback_context.triggered:
-        try:
-            return run_unique_patterns_analysis()
-        except Exception as e:
-            return dbc.Alert(f"Auto-analysis failed: {str(e)}", color="danger")
+        return get_initial_message_safe()
 
     if not data_source or data_source == "none":
         return dbc.Alert("Please select a data source first", color="warning")
@@ -482,7 +482,7 @@ def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
             Input("unique-patterns-btn", "n_clicks"),
         ],
         [State("analytics-data-source", "value")],
-        prevent_initial_call=False,
+        prevent_initial_call=True,
         callback_id="handle_analysis_buttons",
         component_name="deep_analytics",
     )(handle_analysis_buttons)
