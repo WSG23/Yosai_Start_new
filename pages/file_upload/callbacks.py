@@ -1,318 +1,25 @@
-#!/usr/bin/env python3
-"""
-Complete File Upload Page - Missing piece for consolidation
-Integrates with analytics system
-"""
 import logging
-import json
 from datetime import datetime
+from typing import Any, Dict, List, Tuple
 
-import pandas as pd
-from typing import Optional, Dict, Any, List, Tuple
 from dash import html, dcc
 from dash.dash import no_update
 from dash._callback_context import callback_context
-from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 from dash.dependencies import Input, Output, State, ALL
 import dash_bootstrap_components as dbc
-from services.device_learning_service import DeviceLearningService
-from services.upload_service import process_uploaded_file, create_file_preview
-from utils.upload_store import uploaded_data_store as _uploaded_data_store
 
-from components.column_verification import (
-    save_verified_mappings,
-)
+from core.unified_callback_coordinator import UnifiedCallbackCoordinator
+from services.upload_service import process_uploaded_file
+from utils.upload_store import uploaded_data_store as _uploaded_data_store
 from services.ai_suggestions import generate_column_suggestions
 
+from .layout import build_success_alert, build_failure_alert, build_file_preview_component
+from .helpers import analyze_device_name_with_ai, get_uploaded_data, learning_service
 
 logger = logging.getLogger(__name__)
 
-# Initialize device learning service
-learning_service = DeviceLearningService()
-
-
-def analyze_device_name_with_ai(device_name):
-    """User mappings ALWAYS override AI - FIXED"""
-    try:
-        from services.ai_mapping_store import ai_mapping_store
-
-        # Check for user-confirmed mapping first
-        mapping = ai_mapping_store.get(device_name)
-        if mapping:
-            if mapping.get("source") == "user_confirmed":
-                logger.info(f"\U0001f512 Using USER CONFIRMED mapping for '{device_name}'")
-                return mapping
-
-        # Only use AI if no user mapping exists
-        logger.info(
-            f"\U0001f916 No user mapping found, generating AI analysis for '{device_name}'"
-        )
-
-        from services.ai_device_generator import AIDeviceGenerator
-
-        ai_generator = AIDeviceGenerator()
-        result = ai_generator.generate_device_attributes(device_name)
-
-        ai_mapping = {
-            "floor_number": result.floor_number,
-            "security_level": result.security_level,
-            "confidence": result.confidence,
-            "is_entry": result.is_entry,
-            "is_exit": result.is_exit,
-            "device_name": result.device_name,
-            "ai_reasoning": result.ai_reasoning,
-            "source": "ai_generated",
-        }
-
-        return ai_mapping
-
-    except Exception as e:
-        logger.info(f"\u274c Error in device analysis: {e}")
-        return {
-            "floor_number": 1,
-            "security_level": 5,
-            "confidence": 0.1,
-            "source": "fallback",
-        }
-
-
-def build_success_alert(
-    filename: str,
-    rows: int,
-    cols: int,
-    *,
-    prefix: str = "Successfully uploaded",
-    processed: bool = True,
-) -> dbc.Alert:
-    """Return a Bootstrap alert describing a successful file upload."""
-
-    details = f"\U0001F4CA {rows:,} rows × {cols} columns"
-    if processed:
-        details += " processed"
-
-    return dbc.Alert(
-        [
-            html.H6(
-                [html.I(className="fas fa-check-circle me-2"), f"{prefix} {filename}"],
-                className="alert-heading",
-            ),
-            html.P(details),
-        ],
-        color="success",
-        className="mb-3",
-    )
-
-
-def build_failure_alert(message: str) -> dbc.Alert:
-    """Return a Bootstrap alert describing a failed file upload."""
-
-    return dbc.Alert(
-        [html.H6("Upload Failed", className="alert-heading"), html.P(message)],
-        color="danger",
-    )
-
-
-def build_file_preview_component(df: pd.DataFrame, filename: str) -> html.Div:
-    """Return a preview card and configuration buttons for an uploaded file."""
-
-    return html.Div(
-        [
-            create_file_preview(df.head(5), filename),
-            dbc.Card(
-                [
-                    dbc.CardHeader([html.H6("📋 Data Configuration", className="mb-0")]),
-                    dbc.CardBody(
-                        [
-                            html.P("Configure your data for analysis:", className="mb-3"),
-                            dbc.ButtonGroup(
-                                [
-                                    dbc.Button(
-                                        "📋 Verify Columns",
-                                        id="verify-columns-btn-simple",
-                                        color="primary",
-                                        size="sm",
-                                    ),
-                                    dbc.Button(
-                                        "🤖 Classify Devices",
-                                        id="classify-devices-btn",
-                                        color="info",
-                                        size="sm",
-                                    ),
-                                ],
-                                className="w-100",
-                            ),
-                        ]
-                    ),
-                ],
-                className="mb-3",
-            ),
-        ]
-    )
-
-
-def layout():
-    """File upload page layout with persistent storage"""
-    return dbc.Container(
-        [
-            # Page header
-            dbc.Row(
-                [
-                    dbc.Col(
-                        [
-                            html.H1("📁 File Upload", className="text-primary mb-2"),
-                            html.P(
-                                "Upload CSV, Excel, or JSON files for analysis",
-                                className="text-muted mb-4",
-                            ),
-                        ]
-                    )
-                ]
-            ),
-            # Upload area
-            dbc.Row(
-                [
-                    dbc.Col(
-                        [
-                            dbc.Card(
-                                [
-                                    dbc.CardHeader(
-                                        [
-                                            html.H5(
-                                                "📤 Upload Data Files", className="mb-0"
-                                            )
-                                        ]
-                                    ),
-                                    dbc.CardBody(
-                                        [
-                                            dcc.Upload(
-                                                id="upload-data",
-                                                children=html.Div(
-                                                    [
-                                                        html.I(
-                                                            className="fas fa-cloud-upload-alt fa-4x mb-3 text-primary"
-                                                        ),
-                                                        html.H5(
-                                                            "Drag and Drop or Click to Upload",
-                                                            className="text-primary",
-                                                        ),
-                                                        html.P(
-                                                            "Supports CSV, Excel (.xlsx, .xls), and JSON files",
-                                                            className="text-muted mb-0",
-                                                        ),
-                                                    ]
-                                                ),
-                                                style={
-                                                    "width": "100%",
-                                                    "border": "2px dashed #007bff",
-                                                    "borderRadius": "8px",
-                                                    "textAlign": "center",
-                                                    "cursor": "pointer",
-                                                    "backgroundColor": "#f8f9fa",
-                                                },
-                                                multiple=True,
-                                            )
-                                        ]
-                                    ),
-                                ]
-                            )
-                        ]
-                    )
-                ]
-            ),
-            # Upload results area
-            dbc.Row([dbc.Col([html.Div(id="upload-results")])], className="mb-4"),
-            # Data preview area
-            dbc.Row([dbc.Col([html.Div(id="file-preview")])]),
-            # Navigation to analytics
-            dbc.Row([dbc.Col([html.Div(id="upload-nav")])]),
-            # Container for toast notifications
-            html.Div(id="toast-container"),
-            # CRITICAL: Hidden placeholder buttons to prevent callback errors
-            html.Div(
-                [
-                    dbc.Button(
-                        "", id="verify-columns-btn-simple", style={"display": "none"}
-                    ),
-                    dbc.Button(
-                        "", id="classify-devices-btn", style={"display": "none"}
-                    ),
-                ],
-                style={"display": "none"},
-            ),
-            # Store for uploaded data info
-            dcc.Store(id="file-info-store", data={}),
-            dcc.Store(id="current-file-info-store"),
-            dcc.Store(id="current-session-id", data="session_123"),
-            dbc.Modal(
-                [
-                    dbc.ModalHeader(dbc.ModalTitle("Column Mapping")),
-                    dbc.ModalBody("Configure column mappings here", id="modal-body"),
-                    dbc.ModalFooter(
-                        [
-                            dbc.Button(
-                                "Cancel", id="column-verify-cancel", color="secondary"
-                            ),
-                            dbc.Button(
-                                "Confirm", id="column-verify-confirm", color="success"
-                            ),
-                        ]
-                    ),
-                ],
-                id="column-verification-modal",
-                is_open=False,
-                size="xl",
-            ),
-            dbc.Modal(
-                [
-                    dbc.ModalHeader(dbc.ModalTitle("Device Classification")),
-                    dbc.ModalBody("", id="device-modal-body"),
-                    dbc.ModalFooter(
-                        [
-                            dbc.Button(
-                                "Cancel", id="device-verify-cancel", color="secondary"
-                            ),
-                            dbc.Button(
-                                "Confirm", id="device-verify-confirm", color="success"
-                            ),
-                        ]
-                    ),
-                ],
-                id="device-verification-modal",
-                is_open=False,
-                size="xl",
-            ),
-        ],
-        fluid=True,
-    )
-
-
-def get_uploaded_data() -> Dict[str, pd.DataFrame]:
-    """Get all uploaded data (for use by analytics)."""
-    return _uploaded_data_store.get_all_data()
-
-
-def get_uploaded_filenames() -> List[str]:
-    """Get list of uploaded filenames."""
-    return _uploaded_data_store.get_filenames()
-
-
-def clear_uploaded_data():
-    """Clear all uploaded data."""
-    _uploaded_data_store.clear_all()
-    logger.info("Uploaded data cleared")
-
-
-
-
-
-
-def get_file_info() -> Dict[str, Dict[str, Any]]:
-    """Get information about uploaded files."""
-    return _uploaded_data_store.get_file_info()
-
 
 def highlight_upload_area(n_clicks):
-    """Highlight upload area when 'upload more' is clicked"""
     if n_clicks:
         return {
             "width": "100%",
@@ -334,8 +41,6 @@ def highlight_upload_area(n_clicks):
 
 
 def restore_upload_state(pathname: str) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
-    """Return stored upload details when revisiting the upload page."""
-
     if pathname != "/file-upload" or not _uploaded_data_store:
         return (
             no_update,
@@ -379,9 +84,7 @@ def restore_upload_state(pathname: str) -> Tuple[Any, Any, Any, Any, Any, Any, A
         [
             html.Hr(),
             html.H5("Ready to analyze?"),
-            dbc.Button(
-                "🚀 Go to Analytics", href="/analytics", color="success", size="lg"
-            ),
+            dbc.Button("🚀 Go to Analytics", href="/analytics", color="success", size="lg"),
         ]
     )
 
@@ -396,11 +99,7 @@ def restore_upload_state(pathname: str) -> Tuple[Any, Any, Any, Any, Any, Any, A
     )
 
 
-def process_uploaded_files(
-    contents_list: List[str] | str, filenames_list: List[str] | str
-) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
-    """Handle new uploads and store data in the upload store."""
-
+def process_uploaded_files(contents_list: List[str] | str, filenames_list: List[str] | str) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
     if not contents_list:
         return (
             no_update,
@@ -437,9 +136,7 @@ def process_uploaded_files(
 
                 upload_results.append(build_success_alert(filename, rows, cols))
 
-                file_preview_components.append(
-                    build_file_preview_component(df, filename)
-                )
+                file_preview_components.append(build_file_preview_component(df, filename))
 
                 column_names = df.columns.tolist()
                 file_info_dict[filename] = {
@@ -461,24 +158,20 @@ def process_uploaded_files(
                         for device, mapping in user_mappings.items():
                             mapping["source"] = "user_confirmed"
                             ai_mapping_store.set(device, mapping)
-                        logger.info(
-                            f"✅ Loaded {len(user_mappings)} saved mappings - AI SKIPPED"
-                        )
+                        logger.info(f"✅ Loaded {len(user_mappings)} saved mappings - AI SKIPPED")
                     else:
                         logger.info("🆕 First upload - AI will be used")
                         from services.ai_mapping_store import ai_mapping_store
 
                         ai_mapping_store.clear()
-                except Exception as e:  # pragma: no cover - best effort
+                except Exception as e:
                     logger.info(f"⚠️ Error: {e}")
 
             else:
                 upload_results.append(build_failure_alert(result["error"]))
 
-        except Exception as e:  # pragma: no cover - best effort
-            upload_results.append(
-                build_failure_alert(f"Error processing {filename}: {str(e)}")
-            )
+        except Exception as e:
+            upload_results.append(build_failure_alert(f"Error processing {filename}: {str(e)}"))
 
     upload_nav = []
     if file_info_dict:
@@ -486,9 +179,7 @@ def process_uploaded_files(
             [
                 html.Hr(),
                 html.H5("Ready to analyze?"),
-                dbc.Button(
-                    "🚀 Go to Analytics", href="/analytics", color="success", size="lg"
-                ),
+                dbc.Button("🚀 Go to Analytics", href="/analytics", color="success", size="lg"),
             ]
         )
 
@@ -510,8 +201,6 @@ def handle_modal_dialogs(
     cancel_col_clicks: int | None,
     cancel_dev_clicks: int | None,
 ) -> Tuple[Any, Any, Any]:
-    """Open/close verification modals and show success toasts."""
-
     ctx = callback_context
     trigger_id = ctx.triggered[0]["prop_id"] if ctx.triggered else ""
 
@@ -537,53 +226,7 @@ def handle_modal_dialogs(
     return no_update, no_update, no_update
 
 
-def save_ai_training_data(filename: str, mappings: Dict[str, str], file_info: Dict):
-    """Save confirmed mappings for AI training"""
-    try:
-        logger.info(f"🤖 Saving AI training data for {filename}")
-
-        # Prepare training data
-        training_data = {
-            "filename": filename,
-            "timestamp": datetime.now().isoformat(),
-            "mappings": mappings,
-            "reverse_mappings": {v: k for k, v in mappings.items()},
-            "column_count": len(file_info.get("columns", [])),
-            "ai_suggestions": file_info.get("ai_suggestions", {}),
-            "user_verified": True,
-        }
-
-        try:
-            from plugins.ai_classification.plugin import AIClassificationPlugin
-            from plugins.ai_classification.config import get_ai_config
-
-            ai_plugin = AIClassificationPlugin(get_ai_config())
-            if ai_plugin.start():
-                session_id = (
-                    f"verified_{filename}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                )
-                ai_mappings = {v: k for k, v in mappings.items()}
-                ai_plugin.confirm_column_mapping(ai_mappings, session_id)
-                logger.info(f"✅ AI training data saved: {ai_mappings}")
-        except Exception as ai_e:
-            logger.info(f"⚠️ AI training save failed: {ai_e}")
-
-        import os
-
-        os.makedirs("data/training", exist_ok=True)
-        with open(
-            f"data/training/mappings_{datetime.now().strftime('%Y%m%d')}.jsonl", "a"
-        ) as f:
-            f.write(json.dumps(training_data) + "\n")
-
-        logger.info(f"✅ Training data saved locally")
-
-    except Exception as e:
-        logger.info(f"❌ Error saving training data: {e}")
-
-
 def apply_ai_suggestions(n_clicks, file_info):
-    """Apply AI suggestions automatically - RESTORED"""
     if not n_clicks or not file_info:
         return [no_update]
 
@@ -592,7 +235,6 @@ def apply_ai_suggestions(n_clicks, file_info):
 
     logger.info(f"🤖 Applying AI suggestions for {len(columns)} columns")
 
-    # Apply AI suggestions with confidence > 0.3
     suggested_values = []
     for column in columns:
         suggestion = ai_suggestions.get(column, {})
@@ -610,11 +252,10 @@ def apply_ai_suggestions(n_clicks, file_info):
 
 
 def populate_device_modal_with_learning(is_open, file_info):
-    """Fixed device modal population - gets ALL devices WITH DEBUG"""
     if not is_open:
         return "Modal closed"
 
-    logger.info(f"🔧 Populating device modal...")
+    logger.info("🔧 Populating device modal...")
 
     try:
         uploaded_data = get_uploaded_data()
@@ -634,20 +275,16 @@ def populate_device_modal_with_learning(is_open, file_info):
                     all_devices.update(str(val) for val in unique_vals)
                     logger.info(f"   Found {len(unique_vals)} devices in column '{col}'")
 
-                    # ADD THIS DEBUG SECTION
                     logger.debug(f"🔍 DEBUG - First 10 device names from '{col}':")
                     sample_devices = unique_vals[:10]
                     for i, device in enumerate(sample_devices, 1):
                         logger.debug(f"   {i:2d}. {device}")
 
-                    # TEST AI on sample devices
-                    logger.debug(f"🤖 DEBUG - Testing AI on sample devices:")
+                    logger.debug("🤖 DEBUG - Testing AI on sample devices:")
                     try:
                         from services.ai_device_generator import AIDeviceGenerator
-
                         ai_gen = AIDeviceGenerator()
-
-                        for device in sample_devices[:5]:  # Test first 5
+                        for device in sample_devices[:5]:
                             try:
                                 result = ai_gen.generate_device_attributes(str(device))
                                 logger.info(
@@ -665,7 +302,6 @@ def populate_device_modal_with_learning(is_open, file_info):
         actual_devices = sorted(list(all_devices))
         logger.info(f"🎯 Total unique devices found: {len(actual_devices)}")
 
-        # Rest of your existing function...
         if not actual_devices:
             return dbc.Alert(
                 [
@@ -677,7 +313,6 @@ def populate_device_modal_with_learning(is_open, file_info):
                 color="warning",
             )
 
-        # Create device mapping table (your existing table creation code)
         table_rows = []
         for i, device_name in enumerate(actual_devices):
             ai_attributes = analyze_device_name_with_ai(device_name)
@@ -749,7 +384,6 @@ def populate_device_modal_with_learning(is_open, file_info):
                 )
             )
 
-        # Return your existing table structure
         return dbc.Container(
             [
                 dbc.Alert(
@@ -788,16 +422,9 @@ def populate_device_modal_with_learning(is_open, file_info):
 
 
 def populate_modal_content(is_open, file_info):
-    """RESTORED: Smart AI-driven column mapping"""
-
     if not is_open or not file_info:
-        return (
-            "Modal closed"
-            if not is_open
-            else dbc.Alert("No file information available", color="warning")
-        )
+        return "Modal closed" if not is_open else dbc.Alert("No file information available", color="warning")
 
-    # Unicode fix
     filename = (
         str(file_info.get("filename", "Unknown"))
         .replace("⛑️", "")
@@ -811,41 +438,13 @@ def populate_modal_content(is_open, file_info):
         return dbc.Alert(f"No columns found in {filename}", color="warning")
 
     standard_fields = [
-        {
-            "field": "person_id",
-            "label": "Person/User ID",
-            "description": "Identifies who accessed",
-        },
-        {
-            "field": "door_id",
-            "label": "Door/Location ID",
-            "description": "Identifies where access occurred",
-        },
-        {
-            "field": "timestamp",
-            "label": "Timestamp",
-            "description": "When access occurred",
-        },
-        {
-            "field": "access_result",
-            "label": "Access Result",
-            "description": "Success/failure of access",
-        },
-        {
-            "field": "token_id",
-            "label": "Token/Badge ID",
-            "description": "Badge or card identifier",
-        },
-        {
-            "field": "device_status",
-            "label": "Device Status",
-            "description": "Status of access device",
-        },
-        {
-            "field": "entry_type",
-            "label": "Entry/Exit Type",
-            "description": "Direction of access",
-        },
+        {"field": "person_id", "label": "Person/User ID", "description": "Identifies who accessed"},
+        {"field": "door_id", "label": "Door/Location ID", "description": "Identifies where access occurred"},
+        {"field": "timestamp", "label": "Timestamp", "description": "When access occurred"},
+        {"field": "access_result", "label": "Access Result", "description": "Success/failure of access"},
+        {"field": "token_id", "label": "Token/Badge ID", "description": "Badge or card identifier"},
+        {"field": "device_status", "label": "Device Status", "description": "Status of access device"},
+        {"field": "entry_type", "label": "Entry/Exit Type", "description": "Direction of access"},
     ]
 
     csv_column_options = [{"label": f'"{col}"', "value": col} for col in columns]
@@ -870,24 +469,16 @@ def populate_modal_content(is_open, file_info):
                         [
                             html.Strong(standard_field["label"]),
                             html.Br(),
-                            html.Small(
-                                standard_field["description"], className="text-muted"
-                            ),
+                            html.Small(standard_field["description"], className="text-muted"),
                             html.Br(),
-                            html.Code(
-                                field_name,
-                                className="bg-info text-white px-2 py-1 rounded small",
-                            ),
+                            html.Code(field_name, className="bg-info text-white px-2 py-1 rounded small"),
                         ],
                         style={"width": "40%"},
                     ),
                     html.Td(
                         [
                             dcc.Dropdown(
-                                id={
-                                    "type": "standard-field-mapping",
-                                    "field": field_name,
-                                },
+                                id={"type": "standard-field-mapping", "field": field_name},
                                 options=csv_column_options,
                                 placeholder=f"Select CSV column for {field_name}",
                                 value=suggested_csv_column,
@@ -899,20 +490,8 @@ def populate_modal_content(is_open, file_info):
                     html.Td(
                         [
                             dbc.Badge(
-                                (
-                                    f"AI: {ai_confidence:.0%}"
-                                    if suggested_csv_column
-                                    else "No AI suggestion"
-                                ),
-                                color=(
-                                    "success"
-                                    if ai_confidence > 0.7
-                                    else (
-                                        "warning"
-                                        if ai_confidence > 0.4
-                                        else "secondary"
-                                    )
-                                ),
+                                f"AI: {ai_confidence:.0%}" if suggested_csv_column else "No AI suggestion",
+                                color=("success" if ai_confidence > 0.7 else ("warning" if ai_confidence > 0.4 else "secondary")),
                                 className="small",
                             )
                         ],
@@ -955,13 +534,8 @@ def populate_modal_content(is_open, file_info):
                     [
                         html.Tr(
                             [
-                                html.Th(
-                                    "Analytics Field (Fixed)", style={"width": "40%"}
-                                ),
-                                html.Th(
-                                    "Maps to CSV Column (Variable)",
-                                    style={"width": "50%"},
-                                ),
+                                html.Th("Analytics Field (Fixed)", style={"width": "40%"}),
+                                html.Th("Maps to CSV Column (Variable)", style={"width": "50%"}),
                                 html.Th("AI Confidence", style={"width": "10%"}),
                             ]
                         )
@@ -980,12 +554,7 @@ def populate_modal_content(is_open, file_info):
                         html.P("Available columns from your uploaded file:"),
                         html.Div(
                             [
-                                dbc.Badge(
-                                    col,
-                                    color="light",
-                                    text_color="dark",
-                                    className="me-1 mb-1",
-                                )
+                                dbc.Badge(col, color="light", text_color="dark", className="me-1 mb-1")
                                 for col in columns
                             ]
                         ),
@@ -997,10 +566,7 @@ def populate_modal_content(is_open, file_info):
     ]
 
 
-def save_confirmed_device_mappings(
-    confirm_clicks, floors, security, access, special, file_info
-):
-    """Save confirmed device mappings to database"""
+def save_confirmed_device_mappings(confirm_clicks, floors, security, access, special, file_info):
     if not confirm_clicks or not file_info:
         return no_update, no_update, no_update
 
@@ -1008,7 +574,6 @@ def save_confirmed_device_mappings(
         devices = file_info.get("devices", [])
         filename = file_info.get("filename", "")
 
-        # Create user mappings from inputs
         user_mappings = {}
         for i, device in enumerate(devices):
             user_mappings[device] = {
@@ -1016,25 +581,19 @@ def save_confirmed_device_mappings(
                 "security_level": security[i] if i < len(security) else 5,
                 "is_entry": "entry" in (access[i] if i < len(access) else []),
                 "is_exit": "exit" in (access[i] if i < len(access) else []),
-                "is_restricted": "is_restricted"
-                in (special[i] if i < len(special) else []),  # ADD THIS
+                "is_restricted": "is_restricted" in (special[i] if i < len(special) else []),
                 "confidence": 1.0,
                 "device_name": device,
                 "source": "user_confirmed",
                 "saved_at": datetime.now().isoformat(),
             }
 
-        # Save to learning service database
         learning_service.save_user_device_mappings(filename, user_mappings)
 
-        # Update global mappings
         from services.ai_mapping_store import ai_mapping_store
-
         ai_mapping_store.update(user_mappings)
 
-        logger.info(
-            f"\u2705 Saved {len(user_mappings)} confirmed device mappings to database"
-        )
+        logger.info(f"\u2705 Saved {len(user_mappings)} confirmed device mappings to database")
 
         success_alert = dbc.Toast(
             "✅ Device mappings saved to database!",
@@ -1059,8 +618,6 @@ def save_confirmed_device_mappings(
 
 
 def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
-    """Register page callbacks using the provided coordinator."""
-
     manager.register_callback(
         Output("upload-data", "style"),
         Input("upload-more-btn", "n_clicks"),
@@ -1143,10 +700,7 @@ def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
 
     manager.register_callback(
         Output("modal-body", "children"),
-        [
-            Input("column-verification-modal", "is_open"),
-            Input("current-file-info-store", "data"),
-        ],
+        [Input("column-verification-modal", "is_open"), Input("current-file-info-store", "data")],
         prevent_initial_call=True,
         callback_id="populate_modal_content",
         component_name="file_upload",
@@ -1172,18 +726,4 @@ def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
     )(save_confirmed_device_mappings)
 
 
-# Export functions for integration with other modules
-__all__ = [
-    "layout",
-    "get_uploaded_data",
-    "get_uploaded_filenames",
-    "clear_uploaded_data",
-    "get_file_info",
-    "restore_upload_state",
-    "process_uploaded_files",
-    "handle_modal_dialogs",
-    "save_ai_training_data",
-    "register_callbacks",
-]
-
-logger.info(f"\U0001f50d FILE_UPLOAD.PY LOADED - Callbacks should be registered")
+__all__ = ["register_callbacks"]
