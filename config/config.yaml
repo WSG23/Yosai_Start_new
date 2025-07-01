@@ -21,6 +21,13 @@ sample_files:
   csv_path: "data/sample_data.csv"
   json_path: "data/sample_data.json"
 
+ai_suggestions:
+  person_id_confidence: 0.7
+  door_id_confidence: 0.7
+  timestamp_confidence: 0.8
+  access_result_confidence: 0.7
+  token_id_confidence: 0.6
+
 logging:
   level: "INFO"
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

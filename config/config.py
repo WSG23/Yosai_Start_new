@@ -70,6 +70,17 @@ class SampleFilesConfig:
 
 
 @dataclass
+class AISuggestionsConfig:
+    """Confidence values for AI column suggestions"""
+
+    person_id_confidence: float = 0.7
+    door_id_confidence: float = 0.7
+    timestamp_confidence: float = 0.8
+    access_result_confidence: float = 0.7
+    token_id_confidence: float = 0.6
+
+
+@dataclass
 class Config:
     """Main configuration object"""
 
@@ -77,6 +88,7 @@ class Config:
     database: DatabaseConfig = field(default_factory=DatabaseConfig)
     security: SecurityConfig = field(default_factory=SecurityConfig)
     sample_files: SampleFilesConfig = field(default_factory=SampleFilesConfig)
+    ai_suggestions: AISuggestionsConfig = field(default_factory=AISuggestionsConfig)
     environment: str = "development"
 
 
@@ -215,6 +227,24 @@ class ConfigManager:
                 "json_path", self.config.sample_files.json_path
             )
 
+        if "ai_suggestions" in yaml_config:
+            ai_data = yaml_config["ai_suggestions"]
+            self.config.ai_suggestions.person_id_confidence = ai_data.get(
+                "person_id_confidence", self.config.ai_suggestions.person_id_confidence
+            )
+            self.config.ai_suggestions.door_id_confidence = ai_data.get(
+                "door_id_confidence", self.config.ai_suggestions.door_id_confidence
+            )
+            self.config.ai_suggestions.timestamp_confidence = ai_data.get(
+                "timestamp_confidence", self.config.ai_suggestions.timestamp_confidence
+            )
+            self.config.ai_suggestions.access_result_confidence = ai_data.get(
+                "access_result_confidence", self.config.ai_suggestions.access_result_confidence
+            )
+            self.config.ai_suggestions.token_id_confidence = ai_data.get(
+                "token_id_confidence", self.config.ai_suggestions.token_id_confidence
+            )
+
     def _apply_env_overrides(self) -> None:
         """Apply environment variable overrides"""
         # App overrides
@@ -339,6 +369,10 @@ class ConfigManager:
         """Get sample file path configuration"""
         return self.config.sample_files
 
+    def get_ai_suggestions_config(self) -> AISuggestionsConfig:
+        """Get AI suggestions configuration"""
+        return self.config.ai_suggestions
+
 
 # Global configuration instance
 _config_manager: Optional[ConfigManager] = None
@@ -380,6 +414,11 @@ def get_sample_files_config() -> SampleFilesConfig:
     return get_config().get_sample_files_config()
 
 
+def get_ai_suggestions_config() -> AISuggestionsConfig:
+    """Get AI suggestion configuration"""
+    return get_config().get_ai_suggestions_config()
+
+
 # Export main classes and functions
 __all__ = [
     "Config",
@@ -387,6 +426,7 @@ __all__ = [
     "DatabaseConfig",
     "SecurityConfig",
     "SampleFilesConfig",
+    "AISuggestionsConfig",
     "ConfigManager",
     "get_config",
     "reload_config",
@@ -394,4 +434,5 @@ __all__ = [
     "get_database_config",
     "get_security_config",
     "get_sample_files_config",
+    "get_ai_suggestions_config",
 ]
