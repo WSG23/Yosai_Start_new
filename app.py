@@ -55,7 +55,7 @@ def print_startup_info(app_config):
     logger.info(f"🔧 Debug Mode: {app_config.debug}")
     logger.info(f"🌍 Environment: {app_config.environment}")
     logger.info(f"Analytics: http://{app_config.host}:{app_config.port}/analytics")
-    logger.info(f"Upload: http://{app_config.host}:{app_config.port}/upload")
+    logger.info(f"Upload: http://{app_config.host}:{app_config.port}/file-upload")
     logger.info("=" * 60)
 
     if app_config.debug:

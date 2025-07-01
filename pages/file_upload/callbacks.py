@@ -41,7 +41,7 @@ def highlight_upload_area(n_clicks):
 
 
 def restore_upload_state(pathname: str) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
-    if pathname != "/file-upload" or not _uploaded_data_store:
+    if pathname not in ("/file-upload", "/upload") or not _uploaded_data_store:
         return (
             no_update,
             no_update,

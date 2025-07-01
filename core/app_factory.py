@@ -257,7 +257,7 @@ def _create_navbar() -> dbc.Navbar:
                                 dbc.NavLink([
                                     html.I(className="fas fa-upload me-1"),
                                     "Upload",
-                                ], href="/upload"),
+                                ], href="/file-upload"),
                             ),
                             dbc.NavItem(
                                 dbc.NavLink([
