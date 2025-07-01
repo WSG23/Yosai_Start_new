@@ -382,15 +382,29 @@ def run_unique_patterns_analysis():
             color="danger",
         )
 
-def handle_analysis_buttons(security_n, trends_n, behavior_n, anomaly_n, suggests_n, quality_n, unique_n, data_source):
+def handle_analysis_buttons(
+    security_n,
+    trends_n,
+    behavior_n,
+    anomaly_n,
+    suggests_n,
+    quality_n,
+    unique_n,
+    data_source,
+):
     """Handle analysis button clicks and auto-run Unique Patterns on load."""
 
-    # Auto-run Unique Patterns when data source is available and no button clicked yet
-    if not callback_context.triggered and data_source and data_source != "none":
-        return run_unique_patterns_analysis()
-
+    # Check if this is the initial page load (no buttons clicked yet)
     if not callback_context.triggered:
-        return get_initial_message_safe()
+        # Auto-run Unique Patterns if we have a data source
+        data_sources = get_data_source_options_safe()
+        if data_sources and len(data_sources) > 0:
+            try:
+                return run_unique_patterns_analysis()
+            except Exception as e:
+                return dbc.Alert(f"Auto-analysis failed: {str(e)}", color="danger")
+        else:
+            return get_initial_message_safe()
 
     if not data_source or data_source == "none":
         return dbc.Alert("Please select a data source first", color="warning")
