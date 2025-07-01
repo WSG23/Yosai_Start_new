@@ -192,7 +192,7 @@ class AnalyticsService:
             self.database_manager = None
 
     def get_analytics_from_uploaded_data(self) -> Dict[str, Any]:
-        """Get analytics from uploaded files using the FIXED file processor"""
+        """Get analytics from uploaded files using the file processor"""
         try:
             # Get uploaded file paths (not pre-processed data)
             from pages.file_upload import get_uploaded_filenames
@@ -363,7 +363,7 @@ class AnalyticsService:
         return summarize_dataframe(df)
 
     def _get_real_uploaded_data(self) -> Dict[str, Any]:
-        """FIXED: Actually access your uploaded 395K records"""
+        """Access uploaded records"""
         try:
             uploaded_data = self.load_uploaded_data()
             if not uploaded_data:
@@ -409,7 +409,7 @@ class AnalyticsService:
 
 
     def _get_analytics_with_fixed_processor(self) -> Dict[str, Any]:
-        """Get analytics using the FIXED file processor"""
+        """Get analytics using the file processor"""
 
         from config.config import get_sample_files_config
 
@@ -425,7 +425,7 @@ class AnalyticsService:
             processor = FileProcessor(upload_folder="temp", allowed_extensions={'csv', 'json', 'xlsx'})
             all_data = []
 
-            # Process CSV with FIXED processor
+            # Process CSV with file processor
             if os.path.exists(csv_file):
                 df_csv = pd.read_csv(csv_file)
                 result = processor._validate_data(df_csv)
@@ -434,7 +434,7 @@ class AnalyticsService:
                     processed_df['source_file'] = 'csv'
                     all_data.append(processed_df)
 
-            # Process JSON with FIXED processor
+            # Process JSON with file processor
             if os.path.exists(json_file):
                 with open(json_file, 'r') as f:
                     json_data = json.load(f)
