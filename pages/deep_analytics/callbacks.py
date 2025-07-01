@@ -155,9 +155,7 @@ def run_unique_patterns_analysis():
                             dbc.Col(
                                 dbc.Card(
                                     [
-                                        dbc.CardHeader(
-                                            html.H4("User Pattern Analysis")
-                                        ),
+                                        dbc.CardHeader(html.H4("User Pattern Analysis")),
                                         dbc.CardBody(
                                             html.Div(
                                                 dbc.Row(
@@ -181,9 +179,7 @@ def run_unique_patterns_analysis():
                                                         ),
                                                         dbc.Col(
                                                             [
-                                                                html.H5(
-                                                                    "Access Patterns"
-                                                                ),
+                                                                html.H5("Access Patterns"),
                                                                 html.P(
                                                                     f"Single-Door Users: {len(user_patterns.get('user_classifications', {}).get('single_door_users', []))}"
                                                                 ),
@@ -207,9 +203,7 @@ def run_unique_patterns_analysis():
                             dbc.Col(
                                 dbc.Card(
                                     [
-                                        dbc.CardHeader(
-                                            html.H4("Device Pattern Analysis")
-                                        ),
+                                        dbc.CardHeader(html.H4("Device Pattern Analysis")),
                                         dbc.CardBody(
                                             html.Div(
                                                 dbc.Row(
@@ -233,9 +227,7 @@ def run_unique_patterns_analysis():
                                                         ),
                                                         dbc.Col(
                                                             [
-                                                                html.H5(
-                                                                    "Security Status"
-                                                                ),
+                                                                html.H5("Security Status"),
                                                                 html.P(
                                                                     f"Secure Devices: {len(device_patterns.get('device_classifications', {}).get('secure_devices', []))}"
                                                                 ),
@@ -281,10 +273,7 @@ def run_unique_patterns_analysis():
                                                             className="badge badge-secondary me-1",
                                                         )
                                                         for hour, count in sorted(
-                                                            temporal_patterns.get(
-                                                                "hourly_distribution",
-                                                                {},
-                                                            ).items()
+                                                            temporal_patterns.get('hourly_distribution', {}).items()
                                                         )
                                                     ]
                                                 ),
@@ -338,11 +327,9 @@ def run_unique_patterns_analysis():
                                             className="mb-0",
                                         ),
                                     ],
-                                    color=(
-                                        "warning"
-                                        if rec["priority"] == "High"
-                                        else "info"
-                                    ),
+                                    color="warning"
+                                    if rec["priority"] == "High"
+                                    else "info",
                                 )
                                 for rec in recommendations
                             ]
@@ -395,7 +382,6 @@ def run_unique_patterns_analysis():
             color="danger",
         )
 
-
 def handle_analysis_buttons(
     security_n,
     trends_n,
@@ -405,16 +391,17 @@ def handle_analysis_buttons(
     quality_n,
     unique_n,
     pathname,
-    pathname_i18n,
     data_source,
 ):
     """Handle analysis button clicks and auto-run Unique Patterns on load."""
 
     # Auto-run on page load or when navigating directly to the analytics page
-    if not callback_context.triggered or (
-        callback_context.triggered[0]["prop_id"]
-        in {"url.pathname", "url-i18n.pathname"}
-        and (pathname == "/analytics" or pathname_i18n == "/analytics")
+    if (
+        not callback_context.triggered
+        or (
+            callback_context.triggered[0]["prop_id"] == "url.pathname"
+            and pathname == "/analytics"
+        )
     ):
         try:
             return run_unique_patterns_analysis()
@@ -480,11 +467,12 @@ def update_status_alert(trigger):
         return "❌ Service status unknown"
 
 
+
+
 # =============================================================================
 # SECTION 7: HELPER DISPLAY FUNCTIONS
 # Add these helper functions for non-suggests analysis types
 # =============================================================================
-
 
 def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
     """Register page callbacks using the provided coordinator."""
@@ -500,7 +488,6 @@ def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
             Input("quality-btn", "n_clicks"),
             Input("unique-patterns-btn", "n_clicks"),
             Input("url", "pathname"),
-            Input("url-i18n", "pathname"),
         ],
         [State("analytics-data-source", "value")],
         prevent_initial_call=False,
@@ -525,4 +512,6 @@ def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
     )(update_status_alert)
 
 
+
 __all__ = ["register_callbacks"]
+
