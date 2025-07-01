@@ -3,7 +3,7 @@
 import logging
 import time
 from typing import Optional, Any, Dict
-import pickle
+import json
 
 import redis
 from dataclasses import dataclass
@@ -101,7 +101,7 @@ class RedisCacheManager(ICacheManager):
             data = self._client().get(key)
             if data is None:
                 return None
-            return pickle.loads(data)
+            return json.loads(data.decode("utf-8"))
         except Exception as e:
             logger.warning(f"Redis GET failed: {e}")
             return None
@@ -111,7 +111,7 @@ class RedisCacheManager(ICacheManager):
         if not self._started:
             return
         try:
-            data = pickle.dumps(value)
+            data = json.dumps(value)
             expire = ttl or getattr(self.config, 'ttl', None)
             if expire:
                 self._client().setex(key, expire, data)
