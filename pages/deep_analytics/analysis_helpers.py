@@ -24,7 +24,7 @@ except ImportError:  # pragma: no cover - fallback suggestions
             else:
                 suggestions[col] = {"field": "", "confidence": 0.0}
         return suggestions
-    AI_SUGGESTIONS_AVAILABLE = True
+    AI_SUGGESTIONS_AVAILABLE = False
 
 ANALYTICS_SERVICE_AVAILABLE = AnalyticsService is not None
 logger = logging.getLogger(__name__)
