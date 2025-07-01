@@ -3,16 +3,16 @@
 from dash import Input, Output, State, callback_context, html
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 import dash_bootstrap_components as dbc
-from .analysis import (
+from .analysis_helpers import (
     process_suggests_analysis_safe,
     process_quality_analysis_safe,
     analyze_data_with_service_safe,
     get_initial_message_safe,
     get_data_source_options_safe,
     get_analytics_service_safe,
-    create_analysis_results_display_safe,
     AI_SUGGESTIONS_AVAILABLE,
 )
+from .layout_components import create_analysis_results_display_safe
 from services import AnalyticsService
 
 
