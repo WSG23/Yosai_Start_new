@@ -383,7 +383,11 @@ def run_unique_patterns_analysis():
         )
 
 def handle_analysis_buttons(security_n, trends_n, behavior_n, anomaly_n, suggests_n, quality_n, unique_n, data_source):
-    """Handle analysis button clicks and dispatch to helper functions."""
+    """Handle analysis button clicks and auto-run Unique Patterns on load."""
+
+    # Auto-run Unique Patterns when data source is available and no button clicked yet
+    if not callback_context.triggered and data_source and data_source != "none":
+        return run_unique_patterns_analysis()
 
     if not callback_context.triggered:
         return get_initial_message_safe()
@@ -418,7 +422,7 @@ def handle_analysis_buttons(security_n, trends_n, behavior_n, anomaly_n, suggest
             "anomaly": lambda: run_service_analysis(data_source, "anomaly"),
         }
         return dispatch[analysis_type]()
-    except Exception as e:  # pragma: no cover - catch unforeseen errors
+    except Exception as e:
         return dbc.Alert(f"Analysis failed: {str(e)}", color="danger")
 
 
