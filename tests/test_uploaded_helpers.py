@@ -5,7 +5,7 @@ from services import AnalyticsService
 def test_load_uploaded_data(monkeypatch):
     sample = {"file.csv": pd.DataFrame({"A": [1]})}
     monkeypatch.setattr(
-        "pages.file_upload.get_uploaded_data", lambda: sample, raising=False
+        "pages.file_upload.helpers.get_uploaded_data", lambda: sample, raising=False
     )
     service = AnalyticsService()
     assert service.load_uploaded_data() == sample
