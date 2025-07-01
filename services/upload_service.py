@@ -60,6 +60,7 @@ def process_uploaded_file(contents: str, filename: str) -> Dict[str, Any]:
 def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert:
     """Create a preview card for an uploaded DataFrame."""
     try:
+        # FIX: Get statistics from FULL dataframe
         num_rows, num_cols = df.shape
 
         column_info = []
@@ -69,7 +70,8 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
             safe_col = XSSPrevention.sanitize_html_output(str(col))
             column_info.append(f"{safe_col} ({dtype}) - {null_count} nulls")
 
-        preview_df = df.head(5).copy()
+        # FIX: Create sample ONLY for table display
+        preview_df = df.head(5).copy()        
         preview_df.columns = [XSSPrevention.sanitize_html_output(str(c)) for c in preview_df.columns]
         preview_df = preview_df.applymap(lambda x: XSSPrevention.sanitize_html_output(str(x)))
 
@@ -105,7 +107,7 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
                             ]
                         ),
                         html.Hr(),
-                        html.H6("Sample Data:", className="text-primary mt-3"),
+                        html.H6("Sample Data (First 5 Rows):", className="text-primary mt-3"),
                         dbc.Table.from_dataframe(
                             preview_df,
                             striped=True,
