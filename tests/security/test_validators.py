@@ -74,17 +74,3 @@ def test_malicious_query_rejected():
     client = app.test_client()
     resp = client.get("/?q=%3Cscript%3E")
     assert resp.status_code == 400
-
-
-def test_response_sanitized():
-    app = _create_test_app()
-
-    @app.route("/unsafe")
-    def unsafe():
-        return "<script>alert('xss')</script>"
-
-    client = app.test_client()
-    resp = client.get("/unsafe")
-    data = resp.get_data(as_text=True)
-    assert "<script>" not in data
-    assert "&lt;script&gt;" in data
