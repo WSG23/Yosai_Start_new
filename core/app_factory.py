@@ -71,16 +71,9 @@ def _create_full_app() -> dash.Dash:
 
         # Register page/component callbacks
         try:
-            from pages.file_upload.callbacks import register_callbacks as register_upload_callbacks
-            from components.simple_device_mapping import register_callbacks as register_simple_mapping
-            from components.device_verification import register_callbacks as register_device_verification
-            from pages.deep_analytics.callbacks import register_callbacks as register_deep_callbacks
+            _register_page_callbacks(coordinator)
             from dashboard.layout.navbar import register_navbar_callbacks
 
-            register_upload_callbacks(coordinator)
-            register_simple_mapping(coordinator)
-            register_device_verification(coordinator)
-            register_deep_callbacks(coordinator)
             register_navbar_callbacks(coordinator)
 
             if config_manager.get_app_config().environment == "development":
@@ -201,19 +194,13 @@ def _create_json_safe_app() -> dash.Dash:
 
 
 def _create_main_layout() -> html.Div:
-    """Create main application layout with complete integration"""
+    """Simplified main layout"""
     return html.Div(
         [
-            # URL routing component
             dcc.Location(id="url", refresh=False),
-            # Navigation bar
             _create_navbar(),
-            # Main content area (dynamically populated)
-            html.Div(id="page-content", className="main-content p-4"),
-            # Global data stores
-            dcc.Store(id="global-store", data={}),
-            dcc.Store(id="session-store", data={}),
-            dcc.Store(id="app-state-store", data={"initial": True}),
+            html.Div(id="page-content"),
+            dcc.Store(id="global-store"),
         ]
     )
 
@@ -414,6 +401,21 @@ def _get_upload_page() -> Any:
             "File upload page is being loaded...",
             "The file upload module is not available. Please check the installation.",
         )
+
+
+def _register_page_callbacks(coordinator: UnifiedCallbackCoordinator) -> None:
+    """Simplified callback registration"""
+    try:
+        from pages.file_upload.callbacks import register_callbacks as register_upload
+        from pages.deep_analytics.callbacks import register_callbacks as register_analytics
+
+        register_upload(coordinator)
+        register_analytics(coordinator)
+
+        logger.info("Page callbacks registered successfully")
+    except ImportError as e:
+        logger.error(f"Failed to register callbacks: {e}")
+        # Continue without failing
 
 
 def _register_global_callbacks(manager: UnifiedCallbackCoordinator) -> None:
