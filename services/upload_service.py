@@ -62,6 +62,7 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
     try:
         # FIX: Get statistics from FULL dataframe
         num_rows, num_cols = df.shape
+        mem_usage_kb = df.memory_usage(deep=True).sum() / 1024
 
         column_info = []
         for col in df.columns[:10]:
@@ -72,8 +73,12 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
 
         # FIX: Create sample ONLY for table display
         preview_df = df.head(5).copy()        
-        preview_df.columns = [XSSPrevention.sanitize_html_output(str(c)) for c in preview_df.columns]
-        preview_df = preview_df.applymap(lambda x: XSSPrevention.sanitize_html_output(str(x)))
+        preview_df.columns = [
+            XSSPrevention.sanitize_html_output(str(c)) for c in preview_df.columns
+        ]
+        preview_df = preview_df.applymap(
+            lambda x: XSSPrevention.sanitize_html_output(str(x))
+        )
 
         return dbc.Card(
             [
@@ -90,7 +95,7 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
                                                 html.Li(f"Rows: {num_rows:,}"),
                                                 html.Li(f"Columns: {num_cols}"),
                                                 html.Li(
-                                                    f"Memory usage: {df.memory_usage(deep=True).sum() / 1024:.1f} KB"
+                                                    f"Memory usage: {mem_usage_kb:.1f} KB"
                                                 ),
                                             ]
                                         ),
@@ -108,7 +113,7 @@ def create_file_preview(df: pd.DataFrame, filename: str) -> dbc.Card | dbc.Alert
                         ),
                         html.Hr(),
                         html.H6("Sample Data (First 5 Rows):", className="text-primary mt-3"),
-                        dbc.Table.from_dataframe(
+                        dbc.Table.from_dataframe(  # type: ignore[attr-defined]
                             preview_df,
                             striped=True,
                             bordered=True,
