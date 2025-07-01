@@ -267,7 +267,7 @@ def get_ai_column_suggestions(df: pd.DataFrame, filename: str) -> Dict[str, Dict
     """
     suggestions = {}
 
-    logger.info(f"🤖 Analyzing columns for {filename}:")
+    logger.info(f"Analyzing columns for {filename}:")
     logger.info(f"   Columns found: {list(df.columns)}")
 
     try:
@@ -280,7 +280,7 @@ def get_ai_column_suggestions(df: pd.DataFrame, filename: str) -> Dict[str, Dict
             headers = df.columns.tolist()
             session_id = f"file_{filename}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-            logger.info(f"   🧠 Getting AI suggestions for: {headers}")
+            logger.info(f"Getting AI suggestions for: {headers}")
 
             # Get AI mapping suggestions for THIS specific file
             ai_result = ai_plugin.map_columns(headers, session_id)
@@ -295,10 +295,12 @@ def get_ai_column_suggestions(df: pd.DataFrame, filename: str) -> Dict[str, Dict
                             'field': suggested_mapping[header],
                             'confidence': confidence_scores.get(header, 0.0)
                         }
-                        logger.info(f"      ✅ {header} -> {suggested_mapping[header]} ({confidence_scores.get(header, 0):.0%})")
+                        logger.info(
+                            f"      {header} -> {suggested_mapping[header]} ({confidence_scores.get(header, 0):.0%})"
+                        )
                     else:
                         suggestions[header] = {'field': '', 'confidence': 0.0}
-                        logger.info(f"      ❓ {header} -> No AI suggestion")
+                        logger.info(f"      {header} -> No AI suggestion")
 
                 logger.info(f"AI suggestions generated for {len(suggestions)} columns in {filename}")
             else:
@@ -322,13 +324,13 @@ def _analyze_file_specific_columns(df: pd.DataFrame, filename: str) -> Dict[str,
     """
     suggestions = {}
 
-    logger.info(f"📊 Analyzing file-specific patterns in {filename}:")
+    logger.info(f"Analyzing file-specific patterns in {filename}:")
 
     for column in df.columns:
         column_lower = column.lower().strip()
         sample_values = df[column].dropna().head(10).astype(str).tolist()
 
-        logger.info(f"   🔍 Analyzing '{column}':")
+        logger.info(f"   Analyzing '{column}':")
         logger.info(f"      Sample values: {sample_values[:3]}")
 
         suggestion = {'field': '', 'confidence': 0.0}
@@ -337,13 +339,17 @@ def _analyze_file_specific_columns(df: pd.DataFrame, filename: str) -> Dict[str,
         name_confidence = _analyze_column_name(column_lower)
         if name_confidence['field']:
             suggestion = name_confidence
-            logger.info(f"      📝 Name pattern: {suggestion['field']} ({suggestion['confidence']:.0%})")
+            logger.info(
+                f"      Name pattern: {suggestion['field']} ({suggestion['confidence']:.0%})"
+            )
 
         # Analyze sample data patterns  
         data_confidence = _analyze_sample_data(sample_values, column)
         if data_confidence['confidence'] > suggestion['confidence']:
             suggestion = data_confidence
-            logger.info(f"      📈 Data pattern: {suggestion['field']} ({suggestion['confidence']:.0%})")
+            logger.info(
+                f"      Data pattern: {suggestion['field']} ({suggestion['confidence']:.0%})"
+            )
 
         # Store the best suggestion
         suggestions[column] = suggestion
@@ -458,7 +464,7 @@ def save_verified_mappings(filename: str, column_mappings: Dict[str, str],
             }
         }
 
-        logger.info(f"💾 Saving training data for {filename}:")
+        logger.info(f"Saving training data for {filename}:")
         logger.info(f"   Mappings: {column_mappings}")
         logger.info(f"   Context: {training_data['learning_context']}")
 
@@ -479,7 +485,7 @@ def save_verified_mappings(filename: str, column_mappings: Dict[str, str],
                     ai_plugin.csv_repository.store_column_mapping(session_id, training_data)
 
                 logger.info(f"Verified mappings saved to AI system for {filename}")
-                logger.info(f"✅ AI system updated with mappings for {filename}")
+                logger.info(f"AI system updated with mappings for {filename}")
 
         except Exception as ai_e:
             logger.warning(f"Failed to save to AI system: {ai_e}")
@@ -498,17 +504,17 @@ def save_verified_mappings(filename: str, column_mappings: Dict[str, str],
                 f.write(json.dumps(training_data) + '\n')
 
             logger.info(f"Training data appended to {training_file}")
-            logger.info(f"✅ File-specific training data saved to {training_file}")
+            logger.info(f"File-specific training data saved to {training_file}")
 
         except Exception as file_e:
             logger.warning(f"Failed to save training file: {file_e}")
-            logger.info(f"⚠️ Training file save failed: {file_e}")
+            logger.info(f"Training file save failed: {file_e}")
 
         return True
 
     except Exception as e:
         logger.error(f"Error saving verified mappings: {e}")
-        logger.info(f"❌ Error saving mappings: {e}")
+        logger.info(f"Error saving mappings: {e}")
         return False
 
 def toggle_custom_field(selected_value):

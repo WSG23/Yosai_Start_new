@@ -29,9 +29,9 @@ class AIDeviceGenerator:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         
-        # Floor extraction patterns - UPDATED for F01A, F02B format
+        # Floor extraction patterns for F01A, F02B format
         self.floor_patterns = [
-            # Your specific format: F01A, F02B, F03C, etc. - FIXED REGEX
+            # Custom format: F01A, F02B, F03C, etc.
             (r'[Ff]0*(\d+)[A-Z]', lambda m: int(m.group(1))),  # F01A → 1, F02B → 2
             (r'[Ff](\d{2,3})[A-Z]', lambda m: int(m.group(1)[:1]) if len(m.group(1)) >= 2 else int(m.group(1))),  # F10A → 1 (first digit)
             

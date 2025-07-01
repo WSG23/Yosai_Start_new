@@ -51,7 +51,7 @@ def create_app_with_lazystring_fix():
         )
         
         plugin = initialize_lazystring_fix(app, config)
-        logger.info("✅ LazyString fix applied successfully")
+        logger.info("LazyString fix applied successfully")
         
         # Log statistics
         stats = plugin.get_stats()
@@ -137,11 +137,11 @@ def _verify_lazystring_fix(app):
         sanitized = sanitize_lazystring(test_obj)
         json.dumps(sanitized)
         
-        logger.info("✅ LazyString fix verified working")
+        logger.info("LazyString fix verified working")
         return True
         
     except Exception as e:
-        logger.error(f"❌ LazyString fix verification failed: {e}")
+        logger.error(f"LazyString fix verification failed: {e}")
         return False
 
 

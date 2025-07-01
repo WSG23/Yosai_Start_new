@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Complete App Factory Integration - FIXED CLASS NAMES
+Complete application factory integration
 """
 import dash
 import logging
@@ -11,7 +11,7 @@ from dash import html, dcc, Input, Output, callback
 from core.unified_callback_coordinator import UnifiedCallbackCoordinator
 import pandas as pd
 
-# ✅ FIXED IMPORTS - Use correct config system
+# Use correct config system
 from config.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -53,10 +53,10 @@ def _create_full_app() -> dash.Dash:
 
         app.title = "Yōsai Intel Dashboard"
 
-        # ✅ FIXED: Use the working config system
+        # Use the working config system
         config_manager = get_config()
 
-        # ✅ FIXED: Skip plugin system for now (causing import issues)
+        # Skip plugin system for now (causing import issues)
         # We'll add this back after core functionality is working
         # plugin_manager = PluginManager(container, config_manager)
         # plugin_results = plugin_manager.load_all_plugins()
@@ -98,7 +98,7 @@ def _create_full_app() -> dash.Dash:
         def health():
             return {"status": "ok"}, 200
 
-        logger.info("✅ Complete Dash application created successfully")
+        logger.info("Complete Dash application created successfully")
         return app
 
     except Exception as e:
@@ -444,7 +444,7 @@ def _register_global_callbacks(manager: UnifiedCallbackCoordinator) -> None:
 
     create_learning_callbacks()
 
-    logger.info("✅ Global callbacks registered successfully")
+    logger.info("Global callbacks registered successfully")
 
 
 def _initialize_services() -> None:
