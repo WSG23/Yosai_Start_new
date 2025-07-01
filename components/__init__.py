@@ -19,15 +19,15 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 def create_summary_cards(analytics_data: Dict[str, Any]) -> html.Div:
-    """Create summary statistic cards - FIXED for uploaded data"""
+    """Create summary statistic cards for uploaded data"""
     if not analytics_data:
         return html.Div("No analytics data available")
 
-    logger.info(f"📊 Creating summary cards from: {analytics_data.keys()}")
+    logger.info(f"Creating summary cards from: {analytics_data.keys()}")
 
     cards = []
 
-    # Total Events Card - FIXED
+    # Total Events Card
     total_events = analytics_data.get('total_events', 0)
     logger.info(f"   Total events: {total_events}")
     cards.append(
@@ -41,7 +41,7 @@ def create_summary_cards(analytics_data: Dict[str, Any]) -> html.Div:
         ], width=3)
     )
 
-    # Active Users - FIXED with multiple fallbacks
+    # Active Users with multiple fallbacks
     active_users = (
         analytics_data.get('active_users', 0) or
         analytics_data.get('unique_users', 0) or
@@ -59,7 +59,7 @@ def create_summary_cards(analytics_data: Dict[str, Any]) -> html.Div:
         ], width=3)
     )
 
-    # Active Doors - FIXED with multiple fallbacks
+    # Active Doors with multiple fallbacks
     active_doors = (
         analytics_data.get('active_doors', 0) or
         analytics_data.get('unique_doors', 0) or

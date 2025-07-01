@@ -32,7 +32,7 @@ learning_service = DeviceLearningService()
 
 
 def analyze_device_name_with_ai(device_name):
-    """User mappings ALWAYS override AI - FIXED"""
+    """User mappings always override AI"""
     try:
         from services.ai_mapping_store import ai_mapping_store
 
@@ -462,15 +462,15 @@ def process_uploaded_files(
                             mapping["source"] = "user_confirmed"
                             ai_mapping_store.set(device, mapping)
                         logger.info(
-                            f"✅ Loaded {len(user_mappings)} saved mappings - AI SKIPPED"
+                            f"Loaded {len(user_mappings)} saved mappings - AI SKIPPED"
                         )
                     else:
-                        logger.info("🆕 First upload - AI will be used")
+                        logger.info("First upload - AI will be used")
                         from services.ai_mapping_store import ai_mapping_store
 
                         ai_mapping_store.clear()
                 except Exception as e:  # pragma: no cover - best effort
-                    logger.info(f"⚠️ Error: {e}")
+                    logger.info(f"Error: {e}")
 
             else:
                 upload_results.append(build_failure_alert(result["error"]))
@@ -540,7 +540,7 @@ def handle_modal_dialogs(
 def save_ai_training_data(filename: str, mappings: Dict[str, str], file_info: Dict):
     """Save confirmed mappings for AI training"""
     try:
-        logger.info(f"🤖 Saving AI training data for {filename}")
+        logger.info(f"Saving AI training data for {filename}")
 
         # Prepare training data
         training_data = {
@@ -564,9 +564,9 @@ def save_ai_training_data(filename: str, mappings: Dict[str, str], file_info: Di
                 )
                 ai_mappings = {v: k for k, v in mappings.items()}
                 ai_plugin.confirm_column_mapping(ai_mappings, session_id)
-                logger.info(f"✅ AI training data saved: {ai_mappings}")
+                logger.info(f"AI training data saved: {ai_mappings}")
         except Exception as ai_e:
-            logger.info(f"⚠️ AI training save failed: {ai_e}")
+            logger.info(f"AI training save failed: {ai_e}")
 
         import os
 
@@ -576,10 +576,10 @@ def save_ai_training_data(filename: str, mappings: Dict[str, str], file_info: Di
         ) as f:
             f.write(json.dumps(training_data) + "\n")
 
-        logger.info(f"✅ Training data saved locally")
+        logger.info("Training data saved locally")
 
     except Exception as e:
-        logger.info(f"❌ Error saving training data: {e}")
+        logger.info(f"Error saving training data: {e}")
 
 
 def apply_ai_suggestions(n_clicks, file_info):
@@ -590,7 +590,7 @@ def apply_ai_suggestions(n_clicks, file_info):
     ai_suggestions = file_info.get("ai_suggestions", {})
     columns = file_info.get("columns", [])
 
-    logger.info(f"🤖 Applying AI suggestions for {len(columns)} columns")
+    logger.info(f"Applying AI suggestions for {len(columns)} columns")
 
     # Apply AI suggestions with confidence > 0.3
     suggested_values = []
@@ -601,10 +601,12 @@ def apply_ai_suggestions(n_clicks, file_info):
 
         if confidence > 0.3 and field:
             suggested_values.append(field)
-            logger.info(f"   ✅ {column} -> {field} ({confidence:.0%})")
+            logger.info(f"   {column} -> {field} ({confidence:.0%})")
         else:
             suggested_values.append(None)
-            logger.info(f"   ❓ {column} -> No confident suggestion ({confidence:.0%})")
+            logger.info(
+                f"   {column} -> No confident suggestion ({confidence:.0%})"
+            )
 
     return [suggested_values]
 
@@ -635,13 +637,13 @@ def populate_device_modal_with_learning(is_open, file_info):
                     logger.info(f"   Found {len(unique_vals)} devices in column '{col}'")
 
                     # ADD THIS DEBUG SECTION
-                    logger.debug(f"🔍 DEBUG - First 10 device names from '{col}':")
+                    logger.debug(f"DEBUG - First 10 device names from '{col}':")
                     sample_devices = unique_vals[:10]
                     for i, device in enumerate(sample_devices, 1):
                         logger.debug(f"   {i:2d}. {device}")
 
                     # TEST AI on sample devices
-                    logger.debug(f"🤖 DEBUG - Testing AI on sample devices:")
+                    logger.debug("DEBUG - Testing AI on sample devices:")
                     try:
                         from services.ai_device_generator import AIDeviceGenerator
 
@@ -651,19 +653,19 @@ def populate_device_modal_with_learning(is_open, file_info):
                             try:
                                 result = ai_gen.generate_device_attributes(str(device))
                                 logger.info(
-                                    f"   🚪 '{device}' → Name: '{result.device_name}', Floor: {result.floor_number}, Security: {result.security_level}, Confidence: {result.confidence:.1%}"
+                                    f"   '{device}' → Name: '{result.device_name}', Floor: {result.floor_number}, Security: {result.security_level}, Confidence: {result.confidence:.1%}"
                                 )
                                 logger.info(
                                     f"      Access: Entry={result.is_entry}, Exit={result.is_exit}, Elevator={result.is_elevator}"
                                 )
                                 logger.info(f"      Reasoning: {result.ai_reasoning}")
                             except Exception as e:
-                                logger.info(f"   ❌ AI error on '{device}': {e}")
+                                logger.info(f"   AI error on '{device}': {e}")
                     except Exception as e:
-                        logger.debug(f"🤖 DEBUG - AI import error: {e}")
+                        logger.debug(f"DEBUG - AI import error: {e}")
 
         actual_devices = sorted(list(all_devices))
-        logger.info(f"🎯 Total unique devices found: {len(actual_devices)}")
+        logger.info(f"Total unique devices found: {len(actual_devices)}")
 
         # Rest of your existing function...
         if not actual_devices:
@@ -783,7 +785,7 @@ def populate_device_modal_with_learning(is_open, file_info):
         )
 
     except Exception as e:
-        logger.info(f"❌ Error in device modal: {e}")
+        logger.info(f"Error in device modal: {e}")
         return dbc.Alert(f"Error: {e}", color="danger")
 
 

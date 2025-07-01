@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Complete Models Base System - FIXED VERSION
+Base models system
 """
 import logging
 import pandas as pd

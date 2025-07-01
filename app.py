@@ -54,14 +54,14 @@ def print_startup_info(app_config):
     logger.info(f"🌐 URL: http://{app_config.host}:{app_config.port}")
     logger.info(f"🔧 Debug Mode: {app_config.debug}")
     logger.info(f"🌍 Environment: {app_config.environment}")
-    logger.info(f"📊 Analytics: http://{app_config.host}:{app_config.port}/analytics")
-    logger.info(f"📁 Upload: http://{app_config.host}:{app_config.port}/upload")
+    logger.info(f"Analytics: http://{app_config.host}:{app_config.port}/analytics")
+    logger.info(f"Upload: http://{app_config.host}:{app_config.port}/upload")
     logger.info("=" * 60)
 
     if app_config.debug:
-        logger.info("⚠️  Running in DEBUG mode - do not use in production!")
+        logger.info("Running in DEBUG mode - do not use in production!")
 
-    logger.info("\n🚀 Dashboard starting...")
+    logger.info("\nDashboard starting...")
 
 
 def main():
@@ -73,11 +73,11 @@ def main():
 
             config = get_config()
             app_config = config.get_app_config()
-            logger.info("✅ Configuration loaded successfully")
+            logger.info("Configuration loaded successfully")
         except Exception as e:
-            logger.error(f"❌ Failed to load configuration: {e}")
-            logger.info(f"\n❌ Configuration Error: {e}")
-            logger.info("💡 Make sure config/config.py exists and is properly formatted")
+            logger.error(f"Failed to load configuration: {e}")
+            logger.info(f"\nConfiguration Error: {e}")
+            logger.info("Make sure config/config.py exists and is properly formatted")
             sys.exit(1)
 
         # Print startup information
@@ -93,12 +93,12 @@ def main():
             server = app.server
             server.before_request(middleware.validate_request)
             server.after_request(middleware.sanitize_response)
-            logger.info("✅ Application created successfully")
+            logger.info("Application created successfully")
         except Exception as e:
-            logger.error(f"❌ Failed to create application: {e}")
-            logger.info(f"\n❌ Application Creation Error: {e}")
+            logger.error(f"Failed to create application: {e}")
+            logger.info(f"\nApplication Creation Error: {e}")
             logger.info(
-                "💡 Make sure core/app_factory.py exists and dependencies are installed"
+                "Make sure core/app_factory.py exists and dependencies are installed"
             )
             sys.exit(1)
 
@@ -108,16 +108,16 @@ def main():
                 debug=app_config.debug, host=app_config.host, port=app_config.port
             )
         except KeyboardInterrupt:
-            logger.info("\n👋 Application stopped by user")
+            logger.info("\nApplication stopped by user")
         except Exception as e:
-            logger.error(f"❌ Application runtime error: {e}")
-            logger.info(f"\n❌ Runtime Error: {e}")
+            logger.error(f"Application runtime error: {e}")
+            logger.info(f"\nRuntime Error: {e}")
             sys.exit(1)
 
     except Exception as e:
-        logger.error(f"❌ Unexpected error: {e}")
-        logger.info(f"\n❌ Unexpected Error: {e}")
-        logger.info("💡 Check logs for more details")
+        logger.error(f"Unexpected error: {e}")
+        logger.info(f"\nUnexpected Error: {e}")
+        logger.info("Check logs for more details")
         sys.exit(1)
 
 
