@@ -8,7 +8,7 @@ from typing import Optional, Callable, Any
 logger = logging.getLogger(__name__)
 
 # Only import existing pages
-_pages = {}
+_pages: dict[str, Any] = {}
 
 try:
     from . import deep_analytics
@@ -16,6 +16,27 @@ try:
 except ImportError as e:
     logger.warning(f"Deep analytics page not available: {e}")
     _pages['deep_analytics'] = None
+
+try:
+    from . import dashboard
+    _pages['dashboard'] = dashboard
+except ImportError as e:
+    logger.warning(f"Dashboard page not available: {e}")
+    _pages['dashboard'] = None
+
+try:
+    from . import graphs
+    _pages['graphs'] = graphs
+except ImportError as e:
+    logger.warning(f"Graphs page not available: {e}")
+    _pages['graphs'] = None
+
+try:
+    from . import settings
+    _pages['settings'] = settings
+except ImportError as e:
+    logger.warning(f"Settings page not available: {e}")
+    _pages['settings'] = None
 
 try:
     from . import file_upload
