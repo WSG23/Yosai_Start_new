@@ -71,7 +71,7 @@ def _create_full_app() -> dash.Dash:
 
         # Register page/component callbacks
         try:
-            from pages.file_upload import register_callbacks as register_upload_callbacks
+            from pages.file_upload.callbacks import register_callbacks as register_upload_callbacks
             from components.simple_device_mapping import register_callbacks as register_simple_mapping
             from components.device_verification import register_callbacks as register_device_verification
             from pages.deep_analytics.callbacks import register_callbacks as register_deep_callbacks
@@ -399,7 +399,7 @@ def _get_analytics_page() -> Any:
 def _get_upload_page() -> Any:
     """Get upload page with complete integration"""
     try:
-        from pages.file_upload import layout
+        from pages.file_upload.layout import layout
 
         return layout()
     except ImportError as e:
@@ -426,7 +426,7 @@ def _register_global_callbacks(manager: UnifiedCallbackCoordinator) -> None:
         if n_clicks:
             try:
                 # Clear uploaded data
-                from pages.file_upload import clear_uploaded_data
+                from pages.file_upload.helpers import clear_uploaded_data
 
                 clear_uploaded_data()
                 logger.info("Application cache cleared")
