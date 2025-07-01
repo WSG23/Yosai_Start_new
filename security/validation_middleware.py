@@ -3,6 +3,8 @@
 from flask import request, Response
 from typing import Callable
 
+from .xss_validator import XSSPrevention
+
 from config.dynamic_config import dynamic_config
 
 from .validation_exceptions import ValidationError
@@ -49,4 +51,7 @@ class ValidationMiddleware:
         return None
 
     def sanitize_response(self, response: Response) -> Response:
+        body = response.get_data(as_text=True)
+        sanitized = XSSPrevention.sanitize_html_output(body)
+        response.set_data(sanitized)
         return response
