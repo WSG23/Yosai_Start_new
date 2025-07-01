@@ -122,6 +122,7 @@ def test_handle_analysis_buttons_autorun_on_url(monkeypatch):
         None,
         None,
         "/analytics",
+        "/analytics",
         None,
     )
 
