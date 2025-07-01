@@ -14,10 +14,12 @@ import logging
 class ConsolidatedLearningService:
     """Unified learning service for all mapping types."""
 
-    def __init__(self, storage_path: str = "data/learned_mappings.json"):
+    def __init__(self, storage_path: str = "data/learned_mappings.json",
+                 allow_pickle: bool = False):
         self.storage_path = Path(storage_path)
         self.learned_data: Dict[str, Any] = {}
         self.logger = logging.getLogger(__name__)
+        self.allow_pickle = allow_pickle
 
         self.storage_path.parent.mkdir(parents=True, exist_ok=True)
         self._load_learned_data()
@@ -170,7 +172,12 @@ class ConsolidatedLearningService:
         return df.iloc[:, 0].nunique() if len(df.columns) > 0 else 0
 
     def _load_learned_data(self):
-        """Load learned data from storage. Migrate legacy pickle data if needed."""
+        """Load learned data from storage. Migrate legacy pickle data if needed.
+
+        Pickle loading is disabled by default to avoid executing untrusted
+        serialized data. Pass ``allow_pickle=True`` when creating the service to
+        enable migration from the legacy ``.pkl`` format.
+        """
         if self.storage_path.exists():
             try:
                 with open(self.storage_path, "r") as f:
@@ -185,6 +192,11 @@ class ConsolidatedLearningService:
         # Legacy pickle support
         legacy_path = self.storage_path.with_suffix('.pkl')
         if legacy_path.exists():
+            if not self.allow_pickle:
+                self.logger.warning(
+                    f"Legacy pickle file {legacy_path} ignored; set allow_pickle=True to load")
+                self.learned_data = {}
+                return
             try:
                 with open(legacy_path, "rb") as f:
                     self.learned_data = pickle.load(f)
@@ -212,9 +224,9 @@ class ConsolidatedLearningService:
 
 _learning_service: Optional[ConsolidatedLearningService] = None
 
-def get_learning_service() -> ConsolidatedLearningService:
+def get_learning_service(allow_pickle: bool = False) -> ConsolidatedLearningService:
     """Get global learning service instance."""
     global _learning_service
     if _learning_service is None:
-        _learning_service = ConsolidatedLearningService()
+        _learning_service = ConsolidatedLearningService(allow_pickle=allow_pickle)
     return _learning_service

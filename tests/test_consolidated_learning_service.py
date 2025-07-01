@@ -2,6 +2,7 @@
 Test suite for consolidated learning service.
 """
 import pandas as pd
+import pickle
 import tempfile
 from pathlib import Path
 from services.consolidated_learning_service import ConsolidatedLearningService
@@ -94,6 +95,26 @@ class TestConsolidatedLearningService:
         applied = self.service.apply_to_global_store(df, 'apply.csv')
         assert applied is True
         assert ai_mapping_store.all() == mappings
+
+    def test_pickle_file_ignored_by_default(self):
+        legacy_path = self.storage_path.with_suffix('.pkl')
+        with open(legacy_path, 'wb') as f:
+            pickle.dump({'legacy': 'data'}, f)
+
+        reloaded = ConsolidatedLearningService(str(self.storage_path))
+        assert reloaded.learned_data == {}
+
+    def test_pickle_file_loaded_when_allowed(self):
+        legacy_path = self.storage_path.with_suffix('.pkl')
+        data = {'dummy': {'filename': 'x', 'fingerprint': 'y',
+                          'device_mappings': {}, 'column_mappings': {},
+                          'file_stats': {'rows': 0, 'columns': [], 'device_count': 0},
+                          'saved_at': 'now'}}
+        with open(legacy_path, 'wb') as f:
+            pickle.dump(data, f)
+
+        reloaded = ConsolidatedLearningService(str(self.storage_path), allow_pickle=True)
+        assert reloaded.learned_data == data
 
     def teardown_method(self):
         if self.storage_path.exists():

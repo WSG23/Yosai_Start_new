@@ -34,10 +34,13 @@ when similar files are uploaded again.
 
 Older versions of the dashboard stored learned mappings in
 `data/learned_mappings.pkl`. The current service writes mappings to
-`data/learned_mappings.json` instead and will automatically migrate the
-pickle file if it exists. If you need to recreate the legacy
-`learned_mappings.pkl` for testing, run the application and save some
-device mappings, then manually convert the JSON output:
+`data/learned_mappings.json` instead and can migrate the pickle file on
+startup **only when explicitly allowed**. Pickle loading is disabled by
+default for security. Pass `allow_pickle=True` when initializing
+`ConsolidatedLearningService` if you need to import data from the legacy
+format. To recreate `learned_mappings.pkl` for testing, run the
+application and save some device mappings, then manually convert the JSON
+output:
 
 ```bash
 python app.py  # upload a file and confirm mappings
