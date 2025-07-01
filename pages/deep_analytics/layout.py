@@ -3,10 +3,7 @@
 import logging
 from dash import html, dcc
 import dash_bootstrap_components as dbc
-from .analysis import (
-    get_data_source_options_safe,
-    get_latest_uploaded_source_value,
-)
+from .analysis_helpers import get_data_source_options_safe, get_latest_uploaded_source_value
 
 logger = logging.getLogger(__name__)
 
