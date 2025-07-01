@@ -182,9 +182,7 @@ SECRET_KEY=your-key  # Change for production
 ```
 
 The secret key is not included in the default YAML files. Define
-`SECRET_KEY` in your environment or a `.env` file before starting the
-application. The example scripts under `examples/` also rely on this
-variable through the `SecretManager` helper.
+`SECRET_KEY` in your environment or a `.env` file before starting the application. This variable is accessed via the `SecretManager` helper.
 
 When `YOSAI_ENV=production` the application will refuse to start unless both
 `DB_PASSWORD` and `SECRET_KEY` are provided via environment variables or Docker
@@ -332,11 +330,6 @@ See the [data model diagram](docs/data_model.md) for an overview of key entities
 2. Format code with `black` and run `flake8`
 3. Follow type safety guidelines and maintain the modular architecture
 4. Add tests for new functionality and update documentation when applicable
-5. Optional debug helpers live in `examples/`. Run the upload helper with
-   `python examples/debug_upload.py` to validate environment setup
-6. The example CSRF scripts in `examples/` read `SECRET_KEY` from the
-   environment using the `SecretManager`. Set this variable in your shell or
-   `.env` file before running them.
 
 ## 📦 Versioning
 
