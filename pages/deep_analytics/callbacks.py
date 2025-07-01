@@ -473,7 +473,8 @@ def register_callbacks(manager: UnifiedCallbackCoordinator) -> None:
             Input("unique-patterns-btn", "n_clicks"),
         ],
         [State("analytics-data-source", "value")],
-        prevent_initial_call=True,
+        # Allow initial call so Unique Patterns runs on page load
+        prevent_initial_call=False,
         callback_id="handle_analysis_buttons",
         component_name="deep_analytics",
     )(handle_analysis_buttons)
